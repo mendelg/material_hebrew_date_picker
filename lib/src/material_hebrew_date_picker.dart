@@ -216,7 +216,9 @@ class _MaterialHebrewDatePickerState extends State<MaterialHebrewDatePicker> {
                   ),
                   child: Center(
                     child: Text(
-                      _formatter.formatHebrewNumber(day),
+                      widget.hebrewFormat
+                          ? _formatter.formatHebrewNumber(day)
+                          : day.toString(),
                       style: theme.bodyTextStyle.copyWith(
                         color: isSelected
                             ? theme.onPrimaryColor
@@ -821,7 +823,9 @@ class _HebrewDateRangePickerState extends State<HebrewDateRangePicker> {
                     ),
                     child: Center(
                       child: Text(
-                        _formatter.formatHebrewNumber(day),
+                        widget.hebrewFormat
+                            ? _formatter.formatHebrewNumber(day)
+                            : day.toString(),
                         style: theme.bodyTextStyle.copyWith(
                           color: isSelected
                               ? theme.onPrimaryColor

@@ -38,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: JewishDate().getGregorianCalendar(),
       lastDate:
-          JewishDate().getGregorianCalendar().add(const Duration(days: 30)),
+          JewishDate().getGregorianCalendar().add(const Duration(days: 100)),
       hebrewFormat: false,
       onDateChange: (date) {
         print('Date changed: $date');
@@ -55,9 +55,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void _showDateRangePicker() async {
     final DateTimeRange? picked = await showMaterialHebrewDateRangePicker(
       context: context,
-      firstDate: JewishDate().getGregorianCalendar(),
-      lastDate:
-          JewishDate().getGregorianCalendar().add(const Duration(days: 30)),
+      firstDate: JewishDate().getGregorianCalendar().subtract(
+            const Duration(days: 100),
+          ),
+      lastDate: JewishDate.initDate(
+              jewishYear: 5786, jewishMonth: 1, jewishDayOfMonth: 1)
+          .getGregorianCalendar(),
       hebrewFormat: false,
     );
     if (picked != null && picked != _selectedDateRange) {
