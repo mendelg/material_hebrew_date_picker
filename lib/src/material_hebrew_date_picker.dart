@@ -260,7 +260,9 @@ class _MaterialHebrewDatePickerState extends State<MaterialHebrewDatePicker> {
               ),
               child: Center(
                 child: Text(
-                  _formatter.formatHebrewNumber(year),
+                  widget.hebrewFormat
+                      ? _formatter.formatHebrewNumber(year)
+                      : year.toString(),
                   style: theme.bodyTextStyle.copyWith(
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
@@ -366,20 +368,38 @@ class _MaterialHebrewDatePickerState extends State<MaterialHebrewDatePicker> {
   }
 
   String _getHebrewMonthName(int month) {
-    final months = [
-      'ניסן',
-      'אייר',
-      'סיון',
-      'תמוז',
-      'אב',
-      'אלול',
-      'תשרי',
-      'חשון',
-      'כסלו',
-      'טבת',
-      'שבט',
-      'אדר'
-    ];
+    List<String> months;
+    if (widget.hebrewFormat)
+      months = [
+        'ניסן',
+        'אייר',
+        'סיון',
+        'תמוז',
+        'אב',
+        'אלול',
+        'תשרי',
+        'חשון',
+        'כסלו',
+        'טבת',
+        'שבט',
+        'אדר'
+      ];
+    else {
+      months = [
+        'Nisan',
+        'Iyyar',
+        'Sivan',
+        'Tammuz',
+        'Av',
+        'Elul',
+        'Tishrei',
+        'Heshvan',
+        'Kislev',
+        'Tevet',
+        'Shevat',
+        'Adar'
+      ];
+    }
 
     if (_displayedMonth.isJewishLeapYear()) {
       if (month == JewishDate.ADAR) {
@@ -452,7 +472,7 @@ class _MaterialHebrewDatePickerState extends State<MaterialHebrewDatePicker> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    '${_getHebrewMonthName(_displayedMonth.getJewishMonth())} ${_formatter.formatHebrewNumber(_displayedMonth.getJewishYear())}',
+                    '${_getHebrewMonthName(_displayedMonth.getJewishMonth())} ${widget.hebrewFormat ? _formatter.formatHebrewNumber(_displayedMonth.getJewishYear()) : _displayedMonth.getJewishYear()}',
                     style: theme.bodyTextStyle.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.primaryColor,
@@ -820,7 +840,7 @@ class _HebrewDateRangePickerState extends State<HebrewDateRangePicker> {
           onPressed: _currentPage > 0 ? _showPreviousMonth : null,
         ),
         Text(
-          '${_getHebrewMonthName(monthDate.getJewishMonth())} ${_formatter.formatHebrewNumber(monthDate.getJewishYear())}',
+          '${_getHebrewMonthName(monthDate.getJewishMonth())} ${widget.hebrewFormat ? _formatter.formatHebrewNumber(monthDate.getJewishYear()) : monthDate.getJewishYear().toString()}',
           style: theme.headerTextStyle,
         ),
         IconButton(
@@ -870,25 +890,45 @@ class _HebrewDateRangePickerState extends State<HebrewDateRangePicker> {
   String _formatDate(JewishDate date) {
     final day = _formatter.formatHebrewNumber(date.getJewishDayOfMonth());
     final month = _getHebrewMonthName(date.getJewishMonth());
-    final year = _formatter.formatHebrewNumber(date.getJewishYear());
+    final year = widget.hebrewFormat
+        ? _formatter.formatHebrewNumber(date.getJewishYear())
+        : date.getJewishYear().toString();
     return '$day $month $year';
   }
 
   String _getHebrewMonthName(int month) {
-    final months = [
-      'ניסן',
-      'אייר',
-      'סיון',
-      'תמוז',
-      'אב',
-      'אלול',
-      'תשרי',
-      'חשון',
-      'כסלו',
-      'טבת',
-      'שבט',
-      'אדר'
-    ];
+    List<String> months;
+    if (widget.hebrewFormat)
+      months = [
+        'ניסן',
+        'אייר',
+        'סיון',
+        'תמוז',
+        'אב',
+        'אלול',
+        'תשרי',
+        'חשון',
+        'כסלו',
+        'טבת',
+        'שבט',
+        'אדר'
+      ];
+    else {
+      months = [
+        'Nisan',
+        'Iyyar',
+        'Sivan',
+        'Tammuz',
+        'Av',
+        'Elul',
+        'Tishrei',
+        'Heshvan',
+        'Kislev',
+        'Tevet',
+        'Shevat',
+        'Adar'
+      ];
+    }
 
     if (_displayedMonth.isJewishLeapYear()) {
       if (month == JewishDate.ADAR) {
