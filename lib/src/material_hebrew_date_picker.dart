@@ -361,9 +361,13 @@ class _MaterialHebrewDatePickerState extends State<MaterialHebrewDatePicker> {
 
   String _formatFullDate(JewishDate date) {
     final dayOfWeek = _getHebrewDayOfWeek(date.getDayOfWeek());
-    final day = _formatter.formatHebrewNumber(date.getJewishDayOfMonth());
+    final day = widget.hebrewFormat
+        ? _formatter.formatHebrewNumber(date.getJewishDayOfMonth())
+        : date.getJewishDayOfMonth().toString();
     final month = _getHebrewMonthName(date.getJewishMonth());
-    final year = _formatter.formatHebrewNumber(date.getJewishYear());
+    final year = widget.hebrewFormat
+        ? _formatter.formatHebrewNumber(date.getJewishYear())
+        : date.getJewishYear().toString();
     return '$dayOfWeek, $day $month $year';
   }
 
@@ -419,7 +423,19 @@ class _MaterialHebrewDatePickerState extends State<MaterialHebrewDatePicker> {
   }
 
   String _getHebrewDayOfWeek(int day) {
-    final days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    List<String> days;
+    if (widget.hebrewFormat)
+      days = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+    else
+      days = [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday'
+      ];
     return days[day - 1];
   }
 
