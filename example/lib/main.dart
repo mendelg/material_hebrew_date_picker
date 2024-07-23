@@ -36,9 +36,12 @@ class _MyHomePageState extends State<MyHomePage> {
     await showMaterialHebrewDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: JewishDate().getGregorianCalendar(),
-      lastDate:
-          JewishDate().getGregorianCalendar().add(const Duration(days: 100)),
+      firstDate: JewishDate.initDate(
+              jewishYear: 5783, jewishMonth: 1, jewishDayOfMonth: 1)
+          .getGregorianCalendar(),
+      lastDate: JewishDate.initDate(
+              jewishYear: 5785, jewishMonth: 1, jewishDayOfMonth: 1)
+          .getGregorianCalendar(),
       hebrewFormat: false,
       onDateChange: (date) {
         print('Date changed: $date');
@@ -55,11 +58,11 @@ class _MyHomePageState extends State<MyHomePage> {
   void _showDateRangePicker() async {
     final DateTimeRange? picked = await showMaterialHebrewDateRangePicker(
       context: context,
-      firstDate: JewishDate().getGregorianCalendar().subtract(
-            const Duration(days: 100),
-          ),
+      firstDate: JewishDate.initDate(
+              jewishYear: 5783, jewishMonth: 1, jewishDayOfMonth: 1)
+          .getGregorianCalendar(),
       lastDate: JewishDate.initDate(
-              jewishYear: 5786, jewishMonth: 1, jewishDayOfMonth: 1)
+              jewishYear: 5785, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
       hebrewFormat: false,
     );
@@ -88,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               _selectedDate == null
                   ? 'No date selected'
-                  : 'Selected date: ${_selectedDate!.toString()}',
+                  : 'Selected date: ${_formatHebrewDate(_selectedDate!)}',
             ),
             const SizedBox(height: 40),
             ElevatedButton(
@@ -99,11 +102,17 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               _selectedDateRange == null
                   ? 'No date range selected'
-                  : 'Selected range: ${_selectedDateRange!.start.toString()} to ${_selectedDateRange!.end.toString()}',
+                  : 'Selected range: ${_formatHebrewDate(_selectedDateRange!.start)} to ${_formatHebrewDate(_selectedDateRange!.end)}',
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatHebrewDate(DateTime dateTime) {
+    final hebrewForamtter = HebrewDateFormatter()..hebrewFormat = true;
+    final JewishDate jewishDate = JewishDate.fromDateTime(dateTime);
+    return hebrewForamtter.format(jewishDate);
   }
 }
