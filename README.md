@@ -151,8 +151,15 @@ showMaterialHebrewDatePicker(
 
 The package supports both Hebrew and English languages. The language is determined by the `hebrewFormat` parameter:
 
-- When `hebrewFormat` is `true`, the picker displays in Hebrew.
-- When `hebrewFormat` is `false`, the picker displays in English.
+- When `hebrewFormat` is `true`, the picker displays in Hebrew:
+
+  - <img width="353" alt="image" src="https://github.com/user-attachments/assets/5ac15ccb-5d36-433d-9055-dd06489043b6">
+
+- When `hebrewFormat` is `false`, the picker displays in English:
+  
+  - <img width="314" alt="image" src="https://github.com/user-attachments/assets/c2bd356c-153b-4082-9b8b-7c2621c13630">
+
+
 
 ## Contributing
 
