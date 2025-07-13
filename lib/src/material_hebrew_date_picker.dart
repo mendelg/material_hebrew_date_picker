@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kosher_dart/kosher_dart.dart';
-
-import 'hebrew_date_picker_theme.dart';
-
+import 'theme.dart';
 // Base class for shared functionality
 abstract class HebrewDatePickerBase extends StatefulWidget {
   final DateTime firstDate;
