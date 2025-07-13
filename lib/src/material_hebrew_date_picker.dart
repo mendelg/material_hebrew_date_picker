@@ -185,9 +185,7 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
   }
 
   Widget _buildWeekdayHeader(HebrewDatePickerTheme theme) {
-    final weekdays = widget.hebrewFormat
-        ? ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש']
-        : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    final weekdays = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
