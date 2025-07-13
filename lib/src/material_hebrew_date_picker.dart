@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 
-import 'theme.dart';
+import 'hebrew_date_picker_theme.dart';
 
 // Base class for shared functionality
 abstract class HebrewDatePickerBase extends StatefulWidget {
   final DateTime firstDate;
+  final DateTime initialDate;
   final DateTime lastDate;
   final bool hebrewFormat;
   final HebrewDatePickerTheme? theme;
 
-  HebrewDatePickerBase({
-    Key? key,
+  const HebrewDatePickerBase({
+    super.key,
     required this.firstDate,
     required this.lastDate,
+    required this.initialDate,
     this.hebrewFormat = true,
     this.theme,
-  }) : super(key: key);
+  });
 
   @override
   HebrewDatePickerBaseState createState();
@@ -33,11 +35,16 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
   @override
   void initState() {
     super.initState();
-    _displayedMonth = JewishDate.fromDateTime(widget.firstDate);
+    _displayedMonth = JewishDate.fromDateTime(widget.initialDate);
     _formatter = HebrewDateFormatter()..hebrewFormat = widget.hebrewFormat;
-    _totalMonths = _monthsBetween(JewishDate.fromDateTime(widget.firstDate),
-        JewishDate.fromDateTime(widget.lastDate));
-    _currentPage = 0;
+    _totalMonths = _monthsBetween(
+      JewishDate.fromDateTime(widget.firstDate),
+      JewishDate.fromDateTime(widget.lastDate),
+    );
+    _currentPage = _monthsBetween(
+      JewishDate.fromDateTime(widget.firstDate),
+      JewishDate.fromDateTime(widget.initialDate),
+    );
     _pageController = PageController(initialPage: _currentPage);
   }
 
@@ -106,7 +113,7 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
             'כסלו',
             'טבת',
             'שבט',
-            'אדר'
+            'אדר',
           ]
         : [
             'Nisan',
@@ -120,7 +127,7 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
             'Kislev',
             'Tevet',
             'Shevat',
-            'Adar'
+            'Adar',
           ];
 
     if (_displayedMonth.isJewishLeapYear()) {
@@ -188,17 +195,23 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: weekdays
-            .map((day) => Text(day,
+            .map(
+              (day) => Text(
+                day,
                 style: theme.weekdayTextStyle.copyWith(
                   color: theme.onSurfaceColor.withOpacity(0.6),
-                )))
+                ),
+              ),
+            )
             .toList(),
       ),
     );
   }
 
-  Widget _buildCalendar(HebrewDatePickerTheme theme,
-      Widget Function(BuildContext, int) monthViewBuilder) {
+  Widget _buildCalendar(
+    HebrewDatePickerTheme theme,
+    Widget Function(BuildContext, int) monthViewBuilder,
+  ) {
     return Container(
       color: theme.surfaceColor,
       child: Column(
@@ -241,13 +254,12 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
 }
 
 class MaterialHebrewDatePicker extends HebrewDatePickerBase {
-  final DateTime initialDate;
   final ValueChanged<DateTime> onDateChange;
   final ValueChanged<DateTime> onConfirmDate;
 
-  MaterialHebrewDatePicker({
+  const MaterialHebrewDatePicker({
     Key? key,
-    required this.initialDate,
+    required DateTime initialDate,
     required DateTime firstDate,
     required DateTime lastDate,
     required this.onDateChange,
@@ -255,11 +267,13 @@ class MaterialHebrewDatePicker extends HebrewDatePickerBase {
     bool hebrewFormat = true,
     HebrewDatePickerTheme? theme,
   }) : super(
-            key: key,
-            firstDate: firstDate,
-            lastDate: lastDate,
-            hebrewFormat: hebrewFormat,
-            theme: theme);
+         initialDate: initialDate,
+         key: key,
+         firstDate: firstDate,
+         lastDate: lastDate,
+         hebrewFormat: hebrewFormat,
+         theme: theme,
+       );
 
   @override
   _MaterialHebrewDatePickerState createState() =>
@@ -298,7 +312,8 @@ class _MaterialHebrewDatePickerState
               child: Dialog(
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28)),
+                  borderRadius: BorderRadius.circular(28),
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -331,9 +346,7 @@ class _MaterialHebrewDatePickerState
         children: [
           Text(
             widget.hebrewFormat ? 'בחר תאריך' : 'Select Date',
-            style: theme.headerTextStyle.copyWith(
-              color: theme.onPrimaryColor,
-            ),
+            style: theme.headerTextStyle.copyWith(color: theme.onPrimaryColor),
           ),
           const SizedBox(height: 10),
           Text(
@@ -370,10 +383,13 @@ class _MaterialHebrewDatePickerState
 
         final currentDate = JewishDate()
           ..setJewishDate(
-              monthDate.getJewishYear(), monthDate.getJewishMonth(), day);
+            monthDate.getJewishYear(),
+            monthDate.getJewishMonth(),
+            day,
+          );
         final isSelected = currentDate.compareTo(_selectedDate) == 0;
-        final isDisabled = currentDate
-                    .compareTo(JewishDate.fromDateTime(widget.firstDate)) <
+        final isDisabled =
+            currentDate.compareTo(JewishDate.fromDateTime(widget.firstDate)) <
                 0 ||
             currentDate.compareTo(JewishDate.fromDateTime(widget.lastDate)) > 0;
 
@@ -399,10 +415,11 @@ class _MaterialHebrewDatePickerState
                         color: isSelected
                             ? theme.onPrimaryColor
                             : isDisabled
-                                ? theme.disabledColor
-                                : theme.onSurfaceColor,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
+                            ? theme.disabledColor
+                            : theme.onSurfaceColor,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: size * 2.2,
                       ),
                     ),
@@ -425,9 +442,7 @@ class _MaterialHebrewDatePickerState
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
-            style: TextButton.styleFrom(
-              foregroundColor: theme.primaryColor,
-            ),
+            style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
@@ -477,7 +492,7 @@ class _MaterialHebrewDatePickerState
             'Wednesday',
             'Thursday',
             'Friday',
-            'Saturday'
+            'Saturday',
           ];
     return days[day - 1];
   }
@@ -488,7 +503,7 @@ class HebrewDateRangePicker extends HebrewDatePickerBase {
   final DateTime? initialEndDate;
   final ValueChanged<DateTimeRange?> onDateRangeChanged;
 
-  HebrewDateRangePicker({
+  const HebrewDateRangePicker({
     Key? key,
     this.initialStartDate,
     this.initialEndDate,
@@ -498,11 +513,13 @@ class HebrewDateRangePicker extends HebrewDatePickerBase {
     bool hebrewFormat = true,
     HebrewDatePickerTheme? theme,
   }) : super(
-            key: key,
-            firstDate: firstDate,
-            lastDate: lastDate,
-            hebrewFormat: hebrewFormat,
-            theme: theme);
+         initialDate: initialStartDate ?? firstDate,
+         key: key,
+         firstDate: firstDate,
+         lastDate: lastDate,
+         hebrewFormat: hebrewFormat,
+         theme: theme,
+       );
 
   @override
   _HebrewDateRangePickerState createState() => _HebrewDateRangePickerState();
@@ -549,9 +566,7 @@ class _HebrewDateRangePickerState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildHeader(theme),
-                    Flexible(
-                      child: _buildCalendar(theme, _buildMonthView),
-                    ),
+                    Flexible(child: _buildCalendar(theme, _buildMonthView)),
                     _buildFooter(theme),
                   ],
                 ),
@@ -588,9 +603,11 @@ class _HebrewDateRangePickerState
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(widget.hebrewFormat ? 'עד תאריך' : 'End Date'),
-                  Text(_hasSelection && !_isSelectingEndDate
-                      ? _formatDate(_endDate)
-                      : '-'),
+                  Text(
+                    _hasSelection && !_isSelectingEndDate
+                        ? _formatDate(_endDate)
+                        : '-',
+                  ),
                 ],
               ),
             ],
@@ -621,7 +638,10 @@ class _HebrewDateRangePickerState
 
         final currentDate = JewishDate()
           ..setJewishDate(
-              monthDate.getJewishYear(), monthDate.getJewishMonth(), day);
+            monthDate.getJewishYear(),
+            monthDate.getJewishMonth(),
+            day,
+          );
         final isSelected = _isDateInRange(currentDate);
         final isDisabled = _isDateDisabled(currentDate);
         final isToday = currentDate.compareTo(today) == 0;
@@ -639,8 +659,8 @@ class _HebrewDateRangePickerState
                     color: isSelected
                         ? theme.primaryColor
                         : isToday
-                            ? theme.todayColor.withOpacity(0.3)
-                            : null,
+                        ? theme.todayColor.withOpacity(0.3)
+                        : null,
                     borderRadius: BorderRadius.circular(20),
                     border: isToday
                         ? Border.all(color: theme.todayColor, width: 2)
@@ -655,12 +675,13 @@ class _HebrewDateRangePickerState
                         color: isSelected
                             ? theme.onPrimaryColor
                             : isDisabled
-                                ? theme.onSurfaceColor.withOpacity(0.38)
-                                : isToday
-                                    ? theme.todayColor
-                                    : theme.onSurfaceColor,
-                        fontWeight:
-                            isToday ? FontWeight.bold : FontWeight.normal,
+                            ? theme.onSurfaceColor.withOpacity(0.38)
+                            : isToday
+                            ? theme.todayColor
+                            : theme.onSurfaceColor,
+                        fontWeight: isToday
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         fontSize: size * 2.2,
                       ),
                     ),
@@ -683,9 +704,7 @@ class _HebrewDateRangePickerState
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
-            style: TextButton.styleFrom(
-              foregroundColor: theme.primaryColor,
-            ),
+            style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
