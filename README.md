@@ -26,6 +26,23 @@ A customizable Material Design Hebrew date picker for Flutter applications, supp
     - Fully themeable to match your app's design.
 - **Production Ready:** Null-safe, well-documented, and actively maintained.
 
+## Try the Interactive Demo
+
+Want to see the Hebrew date picker in action? Check out the interactive example app in the `/example` folder! 
+
+To run the demo:
+
+```bash
+cd example
+flutter run
+```
+
+The example app showcases all the features including:
+- Single date and date range selection dialogs
+- Embedded calendar widget
+- Custom theming options
+- Hebrew and Gregorian calendar integration
+
 ## Installation
 
 Add this to your package's `pubspec.yaml` file:
