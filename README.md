@@ -25,8 +25,6 @@ Quickly navigate to any month or year by tapping on the month or year in the pic
 
 The "Today" button in the dialog allows you to instantly jump back to the current date.
 
-*(Your screenshot showing the "Today" button would go here)*
-
 ### Initial Picker Mode
 
 You can open the picker directly in the year or month view by using the `initialPickerMode` parameter.
@@ -77,7 +75,7 @@ void _showSingleDatePicker() async {
     firstDate: DateTime(2000),
     lastDate: DateTime(2100),
     hebrewFormat: true,
-    
+    // You can disable certain days with `selectableDayPredicate`
     selectableDayPredicate: (DateTime val) =>
         val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
   );
@@ -156,8 +154,11 @@ void _showSingleDatePicker() async {
   final DateTime? picked = await showMaterialHebrewDatePicker(
     context: context,
     initialDate: DateTime.now(),
-    firstDate: JewishDate().getGregorianCalendar(),
-    lastDate: JewishDate().getGregorianCalendar().add(const Duration(days: 30)),
+    // Use kosher_dart to set a specific Hebrew date range
+    firstDate: (JewishDate()..setJewishDate(5784, JewishDate.TISHREI, 1))
+        .getGregorianCalendar(), // Rosh Hashana 5784
+    lastDate: (JewishDate()..setJewishDate(5784, JewishDate.NISAN, 22))
+        .getGregorianCalendar(), // Last day of Pesach 5784
     hebrewFormat: false,
   );
   if (picked != null) {
