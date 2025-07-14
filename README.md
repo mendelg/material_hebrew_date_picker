@@ -28,16 +28,18 @@ A customizable Material Design Hebrew date picker for Flutter applications, supp
 
 ## Try the Interactive Demo
 
-Want to see the Hebrew date picker in action? Check out the interactive example app in the `/example` folder! 
+Want to see the Hebrew date picker in action? 
 
-To run the demo:
+🌐 **[Try the Live Web Demo](https://mendelg.github.io/material_hebrew_date_picker_demo/)**
+
+Or run the local example:
 
 ```bash
 cd example
 flutter run
 ```
 
-The example app showcases all the features including:
+The demo showcases all the features including:
 - Single date and date range selection dialogs
 - Embedded calendar widget
 - Custom theming options
