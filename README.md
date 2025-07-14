@@ -51,6 +51,8 @@ void _showSingleDatePicker() async {
     firstDate: DateTime(2000),
     lastDate: DateTime(2100),
     hebrewFormat: true,
+    selectableDayPredicate: (DateTime val) =>
+        val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
     onDateChange: (date) {
       print('Date changed: $date');
     },
@@ -74,6 +76,8 @@ void _showDateRangePicker() async {
     firstDate: DateTime.now(),
     lastDate: DateTime.now().add(Duration(days: 365)),
     hebrewFormat: true,
+    selectableDayPredicate: (DateTime val) =>
+        val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
   );
 
   if (result != null) {

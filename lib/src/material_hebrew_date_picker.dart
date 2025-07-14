@@ -9,6 +9,20 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
   final bool hebrewFormat;
   final HebrewDatePickerTheme? theme;
 
+  /// An optional predicate that allows disabling specific days.
+  ///
+  /// If provided, this function will be called for each day in the calendar.
+  /// If the function returns `false` for a given date, that day will be disabled
+  /// and cannot be selected.
+  ///
+  /// The predicate receives a `DateTime` object representing the Gregorian date.
+  ///
+  /// Example:
+  /// ```dart
+  /// selectableDayPredicate: (DateTime val) => val.weekday != DateTime.saturday,
+  /// ```
+  final bool Function(DateTime)? selectableDayPredicate;
+
   const HebrewDatePickerBase({
     super.key,
     required this.firstDate,
@@ -16,6 +30,7 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
     required this.initialDate,
     this.hebrewFormat = true,
     this.theme,
+    this.selectableDayPredicate,
   });
 
   @override
@@ -254,22 +269,16 @@ class MaterialHebrewDatePicker extends HebrewDatePickerBase {
   final ValueChanged<DateTime> onConfirmDate;
 
   const MaterialHebrewDatePicker({
-    Key? key,
-    required DateTime initialDate,
-    required DateTime firstDate,
-    required DateTime lastDate,
+    super.key,
+    required super.initialDate,
+    required super.firstDate,
+    required super.lastDate,
     required this.onDateChange,
     required this.onConfirmDate,
-    bool hebrewFormat = true,
-    HebrewDatePickerTheme? theme,
-  }) : super(
-         initialDate: initialDate,
-         key: key,
-         firstDate: firstDate,
-         lastDate: lastDate,
-         hebrewFormat: hebrewFormat,
-         theme: theme,
-       );
+    super.hebrewFormat,
+    super.theme,
+    super.selectableDayPredicate,
+  });
 
   @override
   _MaterialHebrewDatePickerState createState() =>
@@ -384,10 +393,15 @@ class _MaterialHebrewDatePickerState
             day,
           );
         final isSelected = currentDate.compareTo(_selectedDate) == 0;
+        final gregorianDate = currentDate.getGregorianCalendar();
         final isDisabled =
             currentDate.compareTo(JewishDate.fromDateTime(widget.firstDate)) <
-                0 ||
-            currentDate.compareTo(JewishDate.fromDateTime(widget.lastDate)) > 0;
+                    0 ||
+                currentDate
+                        .compareTo(JewishDate.fromDateTime(widget.lastDate)) >
+                    0 ||
+                (widget.selectableDayPredicate != null &&
+                    !widget.selectableDayPredicate!(gregorianDate));
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -437,17 +451,17 @@ class _MaterialHebrewDatePickerState
         children: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
             style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
+            child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
             onPressed: _confirmDate,
-            child: Text(widget.hebrewFormat ? 'אישור' : 'Confirm'),
             style: ElevatedButton.styleFrom(
               foregroundColor: theme.onPrimaryColor,
               backgroundColor: theme.primaryColor,
             ),
+            child: Text(widget.hebrewFormat ? 'אישור' : 'Confirm'),
           ),
         ],
       ),
@@ -500,21 +514,17 @@ class HebrewDateRangePicker extends HebrewDatePickerBase {
   final ValueChanged<DateTimeRange?> onDateRangeChanged;
 
   const HebrewDateRangePicker({
-    Key? key,
+    super.key,
     this.initialStartDate,
     this.initialEndDate,
-    required DateTime firstDate,
-    required DateTime lastDate,
+    required super.firstDate,
+    required super.lastDate,
     required this.onDateRangeChanged,
-    bool hebrewFormat = true,
-    HebrewDatePickerTheme? theme,
+    super.hebrewFormat,
+    super.theme,
+    super.selectableDayPredicate,
   }) : super(
          initialDate: initialStartDate ?? firstDate,
-         key: key,
-         firstDate: firstDate,
-         lastDate: lastDate,
-         hebrewFormat: hebrewFormat,
-         theme: theme,
        );
 
   @override
@@ -699,17 +709,17 @@ class _HebrewDateRangePickerState
         children: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
             style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
+            child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
             onPressed: _hasSelection ? _confirmDateRange : null,
-            child: Text(widget.hebrewFormat ? 'אישור' : 'Confirm'),
             style: ElevatedButton.styleFrom(
               foregroundColor: theme.onPrimaryColor,
               backgroundColor: theme.primaryColor,
             ),
+            child: Text(widget.hebrewFormat ? 'אישור' : 'Confirm'),
           ),
         ],
       ),
@@ -748,8 +758,11 @@ class _HebrewDateRangePickerState
   }
 
   bool _isDateDisabled(JewishDate date) {
+    final gregorianDate = date.getGregorianCalendar();
     return date.compareTo(JewishDate.fromDateTime(widget.firstDate)) < 0 ||
-        date.compareTo(JewishDate.fromDateTime(widget.lastDate)) > 0;
+        date.compareTo(JewishDate.fromDateTime(widget.lastDate)) > 0 ||
+        (widget.selectableDayPredicate != null &&
+            !widget.selectableDayPredicate!(gregorianDate));
   }
 
   void _confirmDateRange() {
@@ -771,6 +784,11 @@ class _HebrewDateRangePickerState
 }
 
 // Helper functions
+/// Displays a Material Design Hebrew date picker dialog.
+///
+/// This function is a helper that wraps the [MaterialHebrewDatePicker] widget.
+///
+///  * `selectableDayPredicate`: An optional predicate to disable specific days.
 Future<void> showMaterialHebrewDatePicker({
   required BuildContext context,
   DateTime? initialDate,
@@ -780,6 +798,7 @@ Future<void> showMaterialHebrewDatePicker({
   required ValueChanged<DateTime> onDateChange,
   required ValueChanged<DateTime> onConfirmDate,
   HebrewDatePickerTheme? theme,
+  bool Function(DateTime)? selectableDayPredicate,
 }) async {
   return showDialog<void>(
     context: context,
@@ -792,11 +811,17 @@ Future<void> showMaterialHebrewDatePicker({
         onConfirmDate: onConfirmDate,
         hebrewFormat: hebrewFormat,
         theme: theme,
+        selectableDayPredicate: selectableDayPredicate,
       );
     },
   );
 }
 
+/// Displays a Material Design Hebrew date range picker dialog.
+///
+/// This function is a helper that wraps the [HebrewDateRangePicker] widget.
+///
+///  * `selectableDayPredicate`: An optional predicate to disable specific days.
 Future<DateTimeRange?> showMaterialHebrewDateRangePicker({
   required BuildContext context,
   DateTime? initialStartDate,
@@ -805,6 +830,7 @@ Future<DateTimeRange?> showMaterialHebrewDateRangePicker({
   required DateTime lastDate,
   bool hebrewFormat = true,
   HebrewDatePickerTheme? theme,
+  bool Function(DateTime)? selectableDayPredicate,
 }) async {
   return showDialog<DateTimeRange>(
     context: context,
@@ -819,6 +845,7 @@ Future<DateTimeRange?> showMaterialHebrewDateRangePicker({
           Navigator.of(context).pop(range);
         },
         theme: theme,
+        selectableDayPredicate: selectableDayPredicate,
       );
     },
   );

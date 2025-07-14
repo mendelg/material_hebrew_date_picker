@@ -7,6 +7,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -14,13 +16,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Hebrew Date Picker Demo'),
+      home: const MyHomePage(title: 'Hebrew Date Picker Demo'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({super.key, required this.title});
 
   final String title;
 
@@ -43,6 +45,8 @@ class _MyHomePageState extends State<MyHomePage> {
               jewishYear: 5785, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
       hebrewFormat: false,
+      selectableDayPredicate: (DateTime val) =>
+          val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
       onDateChange: (date) {
         print('Date changed: $date');
       },
@@ -64,7 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
       lastDate: JewishDate.initDate(
               jewishYear: 5785, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
-      hebrewFormat: false,
+
+
+      selectableDayPredicate: (DateTime val) {
+        // disable friday and saturday
+        return val.weekday != DateTime.friday && val.weekday != DateTime.saturday;
+      },
     );
     if (picked != null && picked != _selectedDateRange) {
       setState(() {
