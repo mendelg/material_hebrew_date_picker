@@ -20,7 +20,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  material_hebrew_date_picker: 1.0.0+10
+  material_hebrew_date_picker: 1.1.0
 ```
 
 Then run:

@@ -1,4 +1,4 @@
-## 1.0.0+9
+## 1.1.0
 
 - **FEAT**: Added `selectableDayPredicate` to disable specific days of the week.
 - **FEAT**: `showMaterialHebrewDatePicker` now returns a `Future<DateTime?>` to allow for `await`.
