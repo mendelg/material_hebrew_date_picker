@@ -35,6 +35,10 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTimeRange? _selectedDateRange;
 
   void _showSingleDatePicker() async {
+    // --- HOW TO USE NEW NAVIGATION FEATURES ---
+    // 1. Tap the year in the header to open the year picker.
+    // 2. Tap the month in the header to open the month picker.
+    // 3. Use the "Today" button to jump to the current date.
     final DateTime? picked = await showMaterialHebrewDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
@@ -42,14 +46,11 @@ class _MyHomePageState extends State<MyHomePage> {
               jewishYear: 5783, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
       lastDate: JewishDate.initDate(
-              jewishYear: 5785, jewishMonth: 1, jewishDayOfMonth: 1)
+              jewishYear: 5786, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
       hebrewFormat: false,
       selectableDayPredicate: (DateTime val) =>
           val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
-      onDateChange: (date) {
-        print('Date changed: $date');
-      },
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -59,13 +60,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _showDateRangePicker() async {
+    // The same navigation features (year/month picker, "Today" button)
+    // are also available in the date range picker.
     final DateTimeRange? picked = await showMaterialHebrewDateRangePicker(
       context: context,
       firstDate: JewishDate.initDate(
               jewishYear: 5783, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
       lastDate: JewishDate.initDate(
-              jewishYear: 5785, jewishMonth: 1, jewishDayOfMonth: 1)
+              jewishYear: 5786, jewishMonth: 1, jewishDayOfMonth: 1)
           .getGregorianCalendar(),
 
 
@@ -87,13 +90,35 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
+      body: SingleChildScrollView(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            const SizedBox(height: 20),
+            const Text("Embedded Single Date Picker:"),
+            SizedBox(
+              height: 500,
+              width: 500,
+              child: MaterialHebrewDatePicker(
+                initialDate: _selectedDate ?? DateTime.now(),
+                firstDate: JewishDate.initDate(
+                        jewishYear: 5783, jewishMonth: 1, jewishDayOfMonth: 1)
+                    .getGregorianCalendar(),
+                lastDate: JewishDate.initDate(
+                        jewishYear: 5786, jewishMonth: 1, jewishDayOfMonth: 1)
+                    .getGregorianCalendar(),
+                onDateChange: (date) {
+                  setState(() {
+                    _selectedDate = date;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _showSingleDatePicker,
-              child: const Text('Show Single Date Picker'),
+              child: const Text('Show Single Date Picker In Dialog'),
             ),
             const SizedBox(height: 20),
             Text(
@@ -104,13 +129,34 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: _showDateRangePicker,
-              child: const Text('Show Date Range Picker'),
+              child: const Text('Show Date Range Picker In Dialog'),
             ),
             const SizedBox(height: 20),
             Text(
               _selectedDateRange == null
                   ? 'No date range selected'
                   : 'Selected range: ${_formatHebrewDate(_selectedDateRange!.start)} to ${_formatHebrewDate(_selectedDateRange!.end)}',
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                showMaterialHebrewDatePicker(
+                  context: context,
+                  initialDate: _selectedDate ?? DateTime.now(),
+                  firstDate: JewishDate.initDate(
+                          jewishYear: 5783,
+                          jewishMonth: 1,
+                          jewishDayOfMonth: 1)
+                      .getGregorianCalendar(),
+                  lastDate: JewishDate.initDate(
+                          jewishYear: 5786,
+                          jewishMonth: 1,
+                          jewishDayOfMonth: 1)
+                      .getGregorianCalendar(),
+                  initialPickerMode: HebrewDatePickerMode.year,
+                );
+              },
+              child: const Text('Show Picker Starting in Year View'),
             ),
           ],
         ),

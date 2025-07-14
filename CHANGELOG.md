@@ -1,3 +1,9 @@
+## 1.2.0
+
+- **FEAT**: Added year and month picker views for enhanced navigation.
+- **FEAT**: Added a "Go to Today" button for quick access to the current date.
+- **FEAT**: Added `initialPickerMode` to allow opening the picker in year or month view.
+
 ## 1.1.0
 
 - **FEAT**: Added `selectableDayPredicate` to disable specific days of the week.

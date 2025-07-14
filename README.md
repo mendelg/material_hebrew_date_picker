@@ -11,8 +11,33 @@ A customizable Material Design Hebrew date picker for Flutter applications, supp
 - Responsive design for various screen sizes
 - Right-to-left (RTL) support for Hebrew text
 - Today highlighting
-- Year selection mode
 - Customizable color scheme and typography
+
+## Enhanced Navigation
+
+### Year and Month Selection
+
+Quickly navigate to any month or year by tapping on the month or year in the picker's header.
+
+*(Your screenshot of the year-picker view would go here)*
+
+### Go to Today
+
+The "Today" button in the dialog allows you to instantly jump back to the current date.
+
+*(Your screenshot showing the "Today" button would go here)*
+
+### Initial Picker Mode
+
+You can open the picker directly in the year or month view by using the `initialPickerMode` parameter.
+
+```dart
+showMaterialHebrewDatePicker(
+  context: context,
+  // ... other parameters
+  initialPickerMode: HebrewDatePickerMode.year,
+);
+```
 
 ## Installation
 
@@ -45,6 +70,7 @@ import 'package:material_hebrew_date_picker/material_hebrew_date_picker.dart';
 
 ```dart
 void _showSingleDatePicker() async {
+  // Show the date picker and wait for a result
   final DateTime? picked = await showMaterialHebrewDatePicker(
     context: context,
     initialDate: DateTime.now(),
@@ -53,14 +79,11 @@ void _showSingleDatePicker() async {
     hebrewFormat: true,
     selectableDayPredicate: (DateTime val) =>
         val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
-    onDateChange: (date) {
-      print('Date changed: $date');
-    },
   );
 
   if (picked != null) {
+    // A date was picked and confirmed.
     print('Date confirmed: $picked');
-    // Handle the confirmed date
   }
 }
 ```
@@ -72,23 +95,42 @@ void _showSingleDatePicker() async {
 
 ```dart
 void _showDateRangePicker() async {
+  // Show the date range picker and wait for a result
   final DateTimeRange? result = await showMaterialHebrewDateRangePicker(
     context: context,
     firstDate: DateTime.now(),
-    lastDate: DateTime.now().add(Duration(days: 365)),
+    lastDate: DateTime.now().add(const Duration(days: 365)),
     hebrewFormat: true,
     selectableDayPredicate: (DateTime val) =>
         val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
   );
 
   if (result != null) {
+    // A date range was picked and confirmed.
     print('Selected range: ${result.start} to ${result.end}');
-    // Handle the selected date range
   }
 }
 ```
 
+### Embedding the Picker
 
+You can also embed the picker directly in your UI instead of showing it in a dialog. The picker will be scrollable if it's placed in a constrained space.
+
+```dart
+SizedBox(
+  height: 400,
+  width: 320,
+  child: MaterialHebrewDatePicker(
+    initialDate: DateTime.now(),
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+    onDateChange: (date) {
+      // The selected date has changed.
+      print('New date selected: $date');
+    },
+  ),
+)
+```
 
 
 ### Using with kosher_dart
@@ -98,23 +140,18 @@ While not required, you may want to use the [`kosher_dart`](https://pub.dev/pack
 ```dart
 import 'package:kosher_dart/kosher_dart.dart';
 
-void _showSingleDatePicker() {
-  showMaterialHebrewDatePicker(
+void _showSingleDatePicker() async {
+  final DateTime? picked = await showMaterialHebrewDatePicker(
     context: context,
-    initialDate: _selectedDate ?? DateTime.now(),
+    initialDate: DateTime.now(),
     firstDate: JewishDate().getGregorianCalendar(),
     lastDate: JewishDate().getGregorianCalendar().add(const Duration(days: 30)),
     hebrewFormat: false,
-    onDateChange: (date) {
-      print('Date changed: $date');
-    },
-    onConfirmDate: (date) {
-      print('Date confirmed: $date');
-      setState(() {
-        _selectedDate = date;
-      });
-    },
   );
+  if (picked != null) {
+    print('Date confirmed: $picked');
+    // Handle the confirmed date
+  }
 }
 ```
 
