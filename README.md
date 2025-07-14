@@ -49,7 +49,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  material_hebrew_date_picker: ^1.2.1
+  material_hebrew_date_picker: ^1.2.2
 ```
 
 Then run `flutter pub get`.

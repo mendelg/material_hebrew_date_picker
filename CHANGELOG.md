@@ -1,3 +1,5 @@
+## 1.2.2
+- Bug fix
 ## 1.2.1
 
 - **FEAT**: Added `calendarDirection` parameter to control the layout direction of the calendar grid (LTR/RTL).
