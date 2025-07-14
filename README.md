@@ -3,7 +3,7 @@
 
 # Material Hebrew Date Picker
 
-A customizable Material Design Hebrew date picker for Flutter applications, supporting both single date and date range selection. This package provides a culturally appropriate date selection experience for apps targeting Hebrew-speaking users.
+A customizable Material Design Hebrew date picker for Flutter applications, supporting both single date and date range selection. This package provides a culturally appropriate date selection experience for apps.
 
 <br/>
 
