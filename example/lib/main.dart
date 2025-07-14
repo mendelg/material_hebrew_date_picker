@@ -35,7 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   DateTimeRange? _selectedDateRange;
 
   void _showSingleDatePicker() async {
-    await showMaterialHebrewDatePicker(
+    final DateTime? picked = await showMaterialHebrewDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: JewishDate.initDate(
@@ -50,13 +50,12 @@ class _MyHomePageState extends State<MyHomePage> {
       onDateChange: (date) {
         print('Date changed: $date');
       },
-      onConfirmDate: (date) {
-        print('Date confirmed: $date');
-        setState(() {
-          _selectedDate = date;
-        });
-      },
     );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   void _showDateRangePicker() async {
@@ -71,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
       selectableDayPredicate: (DateTime val) {
-        // disable friday and saturday
+        // disable friday and saturday (Shabbat)
         return val.weekday != DateTime.friday && val.weekday != DateTime.saturday;
       },
     );

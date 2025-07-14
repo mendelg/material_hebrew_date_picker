@@ -23,7 +23,7 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
   /// ```
   final bool Function(DateTime)? selectableDayPredicate;
 
-  const HebrewDatePickerBase({
+  HebrewDatePickerBase({
     super.key,
     required this.firstDate,
     required this.lastDate,
@@ -31,7 +31,12 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
     this.hebrewFormat = true,
     this.theme,
     this.selectableDayPredicate,
-  });
+  })  : assert(!firstDate.isAfter(lastDate),
+            'firstDate must be on or before lastDate'),
+        assert(!initialDate.isBefore(firstDate),
+            'initialDate must be on or after firstDate'),
+        assert(!initialDate.isAfter(lastDate),
+            'initialDate must be on or before lastDate');
 
   @override
   HebrewDatePickerBaseState createState();
@@ -266,15 +271,13 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
 
 class MaterialHebrewDatePicker extends HebrewDatePickerBase {
   final ValueChanged<DateTime> onDateChange;
-  final ValueChanged<DateTime> onConfirmDate;
 
-  const MaterialHebrewDatePicker({
+  MaterialHebrewDatePicker({
     super.key,
     required super.initialDate,
     required super.firstDate,
     required super.lastDate,
     required this.onDateChange,
-    required this.onConfirmDate,
     super.hebrewFormat,
     super.theme,
     super.selectableDayPredicate,
@@ -476,8 +479,7 @@ class _MaterialHebrewDatePickerState
   }
 
   void _confirmDate() {
-    widget.onConfirmDate(_selectedDate.getGregorianCalendar());
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(_selectedDate.getGregorianCalendar());
   }
 
   String _formatFullDate(JewishDate date) {
@@ -511,21 +513,19 @@ class _MaterialHebrewDatePickerState
 class HebrewDateRangePicker extends HebrewDatePickerBase {
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
-  final ValueChanged<DateTimeRange?> onDateRangeChanged;
 
-  const HebrewDateRangePicker({
+  HebrewDateRangePicker({
     super.key,
     this.initialStartDate,
     this.initialEndDate,
     required super.firstDate,
     required super.lastDate,
-    required this.onDateRangeChanged,
     super.hebrewFormat,
     super.theme,
     super.selectableDayPredicate,
   }) : super(
-         initialDate: initialStartDate ?? firstDate,
-       );
+          initialDate: initialStartDate ?? firstDate,
+        );
 
   @override
   _HebrewDateRangePickerState createState() => _HebrewDateRangePickerState();
@@ -789,26 +789,24 @@ class _HebrewDateRangePickerState
 /// This function is a helper that wraps the [MaterialHebrewDatePicker] widget.
 ///
 ///  * `selectableDayPredicate`: An optional predicate to disable specific days.
-Future<void> showMaterialHebrewDatePicker({
+Future<DateTime?> showMaterialHebrewDatePicker({
   required BuildContext context,
   DateTime? initialDate,
   required DateTime firstDate,
   required DateTime lastDate,
+  ValueChanged<DateTime>? onDateChange,
   bool hebrewFormat = true,
-  required ValueChanged<DateTime> onDateChange,
-  required ValueChanged<DateTime> onConfirmDate,
   HebrewDatePickerTheme? theme,
   bool Function(DateTime)? selectableDayPredicate,
 }) async {
-  return showDialog<void>(
+  return showDialog<DateTime>(
     context: context,
     builder: (BuildContext context) {
       return MaterialHebrewDatePicker(
         initialDate: initialDate ?? DateTime.now(),
         firstDate: firstDate,
         lastDate: lastDate,
-        onDateChange: onDateChange,
-        onConfirmDate: onConfirmDate,
+        onDateChange: onDateChange ?? (_) {},
         hebrewFormat: hebrewFormat,
         theme: theme,
         selectableDayPredicate: selectableDayPredicate,
@@ -841,9 +839,6 @@ Future<DateTimeRange?> showMaterialHebrewDateRangePicker({
         firstDate: firstDate,
         lastDate: lastDate,
         hebrewFormat: hebrewFormat,
-        onDateRangeChanged: (DateTimeRange? range) {
-          Navigator.of(context).pop(range);
-        },
         theme: theme,
         selectableDayPredicate: selectableDayPredicate,
       );

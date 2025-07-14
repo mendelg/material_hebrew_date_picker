@@ -45,7 +45,7 @@ import 'package:material_hebrew_date_picker/material_hebrew_date_picker.dart';
 
 ```dart
 void _showSingleDatePicker() async {
-  await showMaterialHebrewDatePicker(
+  final DateTime? picked = await showMaterialHebrewDatePicker(
     context: context,
     initialDate: DateTime.now(),
     firstDate: DateTime(2000),
@@ -56,11 +56,12 @@ void _showSingleDatePicker() async {
     onDateChange: (date) {
       print('Date changed: $date');
     },
-    onConfirmDate: (date) {
-      print('Date confirmed: $date');
-      // Handle the confirmed date
-    },
   );
+
+  if (picked != null) {
+    print('Date confirmed: $picked');
+    // Handle the confirmed date
+  }
 }
 ```
 
