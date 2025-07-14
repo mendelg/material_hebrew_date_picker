@@ -642,8 +642,21 @@ class _MaterialHebrewDatePickerState
 
   void _goToToday() {
     final today = JewishDate();
+    final gregorianToday = today.getGregorianCalendar();
+
+    // Check if "today" is within the allowed date range and is selectable.
+    if (gregorianToday.isBefore(widget.firstDate) ||
+        gregorianToday.isAfter(widget.lastDate) ||
+        (widget.selectableDayPredicate != null &&
+            !widget.selectableDayPredicate!(gregorianToday))) {
+      // Optionally, show a message to the user that today is not available.
+      return;
+    }
+
     setState(() {
+      _pickerMode = HebrewDatePickerMode.day;
       _displayedMonth = today;
+      _selectedDate = today; // Select today's date
       _currentPage = _monthsBetween(
         JewishDate.fromDateTime(widget.firstDate),
         today,
@@ -737,8 +750,25 @@ class _HebrewDateRangePickerState
 
   void _goToToday() {
     final today = JewishDate();
+    final gregorianToday = today.getGregorianCalendar();
+
+    // Check if "today" is within the allowed date range and is selectable.
+    if (gregorianToday.isBefore(widget.firstDate) ||
+        gregorianToday.isAfter(widget.lastDate) ||
+        (widget.selectableDayPredicate != null &&
+            !widget.selectableDayPredicate!(gregorianToday))) {
+      // Optionally, show a message to the user that today is not available.
+      return;
+    }
+
     setState(() {
+      _pickerMode = HebrewDatePickerMode.day;
       _displayedMonth = today;
+      // Reset the selection and start a new range from today.
+      _startDate = today;
+      _endDate = today;
+      _hasSelection = true;
+      _isSelectingEndDate = true;
       _currentPage = _monthsBetween(
         JewishDate.fromDateTime(widget.firstDate),
         today,
