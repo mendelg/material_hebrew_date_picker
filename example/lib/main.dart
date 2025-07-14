@@ -98,9 +98,10 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 20),
             const Text("Embedded Single Date Picker:"),
             SizedBox(
-              height: 500,
-              width: 500,
+              height: 300,
+              width: 328,
               child: MaterialHebrewDatePicker(
+                calendarDirection: HebrewCalendarDirection.rtl,
                 initialDate: _selectedDate ?? DateTime.now(),
                 firstDate: JewishDate.initDate(
                         jewishYear: 5783, jewishMonth: 1, jewishDayOfMonth: 1)
@@ -154,6 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           jewishDayOfMonth: 1)
                       .getGregorianCalendar(),
                   initialPickerMode: HebrewDatePickerMode.year,
+                  calendarDirection: HebrewCalendarDirection.rtl,
                 );
               },
               child: const Text('Show Picker Starting in Year View'),

@@ -1,3 +1,10 @@
+## 1.2.1
+
+- **FEAT**: Added `calendarDirection` parameter to control the layout direction of the calendar grid (LTR/RTL).
+- **FIX**: Resolved multiple layout overflow errors by making the picker content scrollable.
+- **FIX**: The "Go to Today" button now correctly selects today's date in addition to navigating to it.
+- **FIX**: Corrected an issue where the `PageController` could be used before it was attached to a `PageView`.
+
 ## 1.2.0
 
 - **FEAT**: Added year and month picker views for enhanced navigation.

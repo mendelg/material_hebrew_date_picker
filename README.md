@@ -77,6 +77,7 @@ void _showSingleDatePicker() async {
     firstDate: DateTime(2000),
     lastDate: DateTime(2100),
     hebrewFormat: true,
+    
     selectableDayPredicate: (DateTime val) =>
         val.weekday != DateTime.friday && val.weekday != DateTime.saturday,
   );
@@ -130,6 +131,17 @@ SizedBox(
     },
   ),
 )
+```
+
+**Note on Calendar Direction:**
+
+You can control the layout direction of the calendar grid using the `calendarDirection` parameter. By default, it's inferred from `hebrewFormat` (`rtl` for Hebrew, `ltr` for English).
+
+```dart
+showMaterialHebrewDatePicker(
+  // ...
+  calendarDirection: HebrewCalendarDirection.rtl,
+);
 ```
 
 
