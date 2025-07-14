@@ -1,6 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:kosher_dart/kosher_dart.dart';
 import 'theme.dart';
+
+/// The view mode of the date picker.
+enum HebrewDatePickerMode {
+  /// The user can select a day.
+  day,
+
+  /// The user can select a month.
+  month,
+
+  /// The user can select a year.
+  year,
+}
+
+/// The direction of the calendar grid.
+enum HebrewCalendarDirection {
+  /// The calendar grid is laid out from left to right.
+  ltr,
+
+  /// The calendar grid is laid out from right to left.
+  rtl,
+}
+
 // Base class for shared functionality
 abstract class HebrewDatePickerBase extends StatefulWidget {
   final DateTime firstDate;
@@ -8,6 +30,9 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
   final DateTime lastDate;
   final bool hebrewFormat;
   final HebrewDatePickerTheme? theme;
+  final bool Function(DateTime)? selectableDayPredicate;
+  final HebrewDatePickerMode initialPickerMode;
+  final HebrewCalendarDirection? calendarDirection;
 
   /// An optional predicate that allows disabling specific days.
   ///
@@ -21,8 +46,6 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
   /// ```dart
   /// selectableDayPredicate: (DateTime val) => val.weekday != DateTime.saturday,
   /// ```
-  final bool Function(DateTime)? selectableDayPredicate;
-
   HebrewDatePickerBase({
     super.key,
     required this.firstDate,
@@ -31,6 +54,8 @@ abstract class HebrewDatePickerBase extends StatefulWidget {
     this.hebrewFormat = true,
     this.theme,
     this.selectableDayPredicate,
+    this.initialPickerMode = HebrewDatePickerMode.day,
+    this.calendarDirection,
   })  : assert(!firstDate.isAfter(lastDate),
             'firstDate must be on or before lastDate'),
         assert(!initialDate.isBefore(firstDate),
@@ -49,10 +74,12 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
   late PageController _pageController;
   late int _currentPage;
   late int _totalMonths;
+  late HebrewDatePickerMode _pickerMode;
 
   @override
   void initState() {
     super.initState();
+    _pickerMode = widget.initialPickerMode;
     _displayedMonth = JewishDate.fromDateTime(widget.initialDate);
     _formatter = HebrewDateFormatter()..hebrewFormat = widget.hebrewFormat;
     _totalMonths = _monthsBetween(
@@ -169,18 +196,51 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
     return months[index];
   }
 
+  void _showMonthPicker() {
+    setState(() {
+      _pickerMode = HebrewDatePickerMode.month;
+    });
+  }
+
+  void _showYearPicker() {
+    setState(() {
+      _pickerMode = HebrewDatePickerMode.year;
+    });
+  }
+
   Widget _buildMonthSelector(HebrewDatePickerTheme theme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '${_getHebrewMonthName(_displayedMonth.getJewishMonth())} ${widget.hebrewFormat ? _formatter.formatHebrewNumber(_displayedMonth.getJewishYear()) : _displayedMonth.getJewishYear()}',
-            style: theme.bodyTextStyle.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.primaryColor,
-            ),
+          Row(
+            children: [
+              InkWell(
+                onTap: _showMonthPicker,
+                child: Text(
+                  _getHebrewMonthName(_displayedMonth.getJewishMonth()),
+                  style: theme.bodyTextStyle.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.primaryColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: _showYearPicker,
+                child: Text(
+                  widget.hebrewFormat
+                      ? _formatter.formatHebrewNumber(
+                          _displayedMonth.getJewishYear())
+                      : _displayedMonth.getJewishYear().toString(),
+                  style: theme.bodyTextStyle.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.primaryColor,
+                  ),
+                ),
+              ),
+            ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -188,13 +248,16 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
               IconButton(
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.chevron_left),
-                onPressed: _showPreviousMonth,
+                onPressed: _pickerMode == HebrewDatePickerMode.day
+                    ? _showPreviousMonth
+                    : null,
                 color: theme.primaryColor,
               ),
               IconButton(
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.chevron_right),
-                onPressed: _showNextMonth,
+                onPressed:
+                    _pickerMode == HebrewDatePickerMode.day ? _showNextMonth : null,
                 color: theme.primaryColor,
               ),
             ],
@@ -205,21 +268,28 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
   }
 
   Widget _buildWeekdayHeader(HebrewDatePickerTheme theme) {
+    final textDirection = (widget.calendarDirection == HebrewCalendarDirection.rtl ||
+            (widget.calendarDirection == null && widget.hebrewFormat))
+        ? TextDirection.rtl
+        : TextDirection.ltr;
     final weekdays = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: weekdays
-            .map(
-              (day) => Text(
-                day,
-                style: theme.weekdayTextStyle.copyWith(
-                  color: theme.onSurfaceColor.withOpacity(0.6),
+    return Directionality(
+      textDirection: textDirection,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: weekdays
+              .map(
+                (day) => Text(
+                  day,
+                  style: theme.weekdayTextStyle.copyWith(
+                    color: theme.onSurfaceColor.withOpacity(0.6),
+                  ),
                 ),
-              ),
-            )
-            .toList(),
+              )
+              .toList(),
+        ),
       ),
     );
   }
@@ -235,7 +305,7 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
           _buildMonthSelector(theme),
           _buildWeekdayHeader(theme),
           AspectRatio(
-            aspectRatio: 1,
+            aspectRatio: 7 / 6,
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: _onPageChanged,
@@ -267,6 +337,136 @@ abstract class HebrewDatePickerBaseState<T extends HebrewDatePickerBase>
           widget.theme?.weekdayTextStyle ?? defaultTheme.weekdayTextStyle,
     );
   }
+
+  void _handleMonthSelection(int month) {
+    setState(() {
+      _displayedMonth.setJewishMonth(month);
+      _pickerMode = HebrewDatePickerMode.day;
+      _currentPage = _monthsBetween(
+        JewishDate.fromDateTime(widget.firstDate),
+        _displayedMonth,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentPage);
+        }
+      });
+    });
+  }
+
+  void _handleYearSelection(int year) {
+    setState(() {
+      final newDate = JewishDate()
+        ..setJewishDate(
+            year, _displayedMonth.getJewishMonth(), _displayedMonth.getJewishDayOfMonth());
+      _displayedMonth = newDate;
+      _pickerMode = HebrewDatePickerMode.day;
+      _currentPage = _monthsBetween(
+        JewishDate.fromDateTime(widget.firstDate),
+        _displayedMonth,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentPage);
+        }
+      });
+    });
+  }
+
+  Widget _buildMonthPicker(HebrewDatePickerTheme theme) {
+    final hebrewMonths = widget.hebrewFormat
+        ? [
+            'ניסן', 'אייר', 'סיון', 'תמוז', 'אב', 'אלול', 'תשרי', 'חשון', 'כסלו', 'טבת', 'שבט', 'אדר א׳', 'אדר ב׳'
+          ]
+        : [
+            'Nisan', 'Iyar', 'Sivan', 'Tammuz', 'Av', 'Elul', 'Tishrei', 'Heshvan', 'Kislev', 'Tevet', 'Shevat', 'Adar I', 'Adar II'
+          ];
+    final isLeap = _displayedMonth.isJewishLeapYear();
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 2.5,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+      ),
+      itemCount: hebrewMonths.length,
+      itemBuilder: (context, index) {
+        final month = index + 1;
+        // Adjust for Adar II
+        final jewishMonth = (month >= 12 && isLeap) ? month + 1 : month;
+        final isDisabled = month == 13 && !isLeap;
+        final isSelectedMonth = jewishMonth == _displayedMonth.getJewishMonth();
+
+        return InkWell(
+          onTap: isDisabled ? null : () => _handleMonthSelection(jewishMonth),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSelectedMonth ? theme.selectedColor : null,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                hebrewMonths[index],
+                style: theme.bodyTextStyle.copyWith(
+                  color: isDisabled
+                      ? theme.disabledColor
+                      : isSelectedMonth
+                          ? theme.onPrimaryColor
+                          : theme.onSurfaceColor,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildYearPicker(HebrewDatePickerTheme theme) {
+    final firstYear = JewishDate.fromDateTime(widget.firstDate).getJewishYear();
+    final lastYear = JewishDate.fromDateTime(widget.lastDate).getJewishYear();
+    final yearCount = lastYear - firstYear + 1;
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 2.5,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+      ),
+      itemCount: yearCount,
+      itemBuilder: (context, index) {
+        final year = firstYear + index;
+        final isSelectedYear = year == _displayedMonth.getJewishYear();
+        return InkWell(
+          onTap: () => _handleYearSelection(year),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isSelectedYear ? theme.selectedColor : null,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                widget.hebrewFormat
+                    ? _formatter.formatHebrewNumber(year)
+                    : year.toString(),
+                style: theme.bodyTextStyle.copyWith(
+                  color: isSelectedYear
+                      ? theme.onPrimaryColor
+                      : theme.onSurfaceColor,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, HebrewDatePickerTheme theme);
 }
 
 class MaterialHebrewDatePicker extends HebrewDatePickerBase {
@@ -281,6 +481,8 @@ class MaterialHebrewDatePicker extends HebrewDatePickerBase {
     super.hebrewFormat,
     super.theme,
     super.selectableDayPredicate,
+    super.initialPickerMode,
+    super.calendarDirection,
   });
 
   @override
@@ -301,44 +503,14 @@ class _MaterialHebrewDatePickerState
   @override
   Widget build(BuildContext context) {
     final theme = _getMergedTheme();
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 360;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = isSmallScreen ? screenSize.width * 0.95 : 360.0;
-        final maxHeight = isSmallScreen ? screenSize.height * 0.9 : 640.0;
-
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-            ),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Dialog(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildHeader(theme),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        child: _buildCalendar(theme, _buildMonthView),
-                      ),
-                    ),
-                    _buildActions(theme),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(theme),
+          _buildBody(context, theme),
+        ],
+      ),
     );
   }
 
@@ -369,104 +541,115 @@ class _MaterialHebrewDatePickerState
     );
   }
 
-  Widget _buildMonthView(BuildContext context, int pageIndex) {
-    final theme = _getMergedTheme();
+  @override
+  Widget _buildBody(BuildContext context, HebrewDatePickerTheme theme) {
+    switch (_pickerMode) {
+      case HebrewDatePickerMode.day:
+        return _buildCalendar(
+          theme,
+          (context, pageIndex) => _buildMonthView(context, pageIndex, theme),
+        );
+      case HebrewDatePickerMode.month:
+        return Column(
+          children: [
+            _buildMonthSelector(theme),
+            AspectRatio(
+              aspectRatio: 7 / 6,
+              child: _buildMonthPicker(theme),
+            ),
+          ],
+        );
+      case HebrewDatePickerMode.year:
+        return Column(
+          children: [
+            _buildMonthSelector(theme),
+            AspectRatio(
+              aspectRatio: 7 / 6,
+              child: _buildYearPicker(theme),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildMonthView(
+      BuildContext context, int pageIndex, HebrewDatePickerTheme theme) {
+    final textDirection = (widget.calendarDirection == HebrewCalendarDirection.rtl ||
+            (widget.calendarDirection == null && widget.hebrewFormat))
+        ? TextDirection.rtl
+        : TextDirection.ltr;
     final monthDate = _getMonthFromPageIndex(pageIndex);
     final daysInMonth = monthDate.getDaysInJewishMonth();
     final firstDayOfMonth = JewishDate()
       ..setJewishDate(monthDate.getJewishYear(), monthDate.getJewishMonth(), 1);
     final firstWeekday = firstDayOfMonth.getDayOfWeek();
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        childAspectRatio: 1,
-      ),
-      itemCount: 42, // 6 rows * 7 days
-      itemBuilder: (context, index) {
-        final int day = index - firstWeekday + 2;
-        if (day < 1 || day > daysInMonth) return Container();
+    return Directionality(
+      textDirection: textDirection,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7,
+          childAspectRatio: 1,
+        ),
+        itemCount: 42, // 6 rows * 7 days
+        itemBuilder: (context, index) {
+          final int day = index - firstWeekday + 2;
+          if (day < 1 || day > daysInMonth) return Container();
 
-        final currentDate = JewishDate()
-          ..setJewishDate(
-            monthDate.getJewishYear(),
-            monthDate.getJewishMonth(),
-            day,
-          );
-        final isSelected = currentDate.compareTo(_selectedDate) == 0;
-        final gregorianDate = currentDate.getGregorianCalendar();
-        final isDisabled =
-            currentDate.compareTo(JewishDate.fromDateTime(widget.firstDate)) <
-                    0 ||
-                currentDate
-                        .compareTo(JewishDate.fromDateTime(widget.lastDate)) >
-                    0 ||
-                (widget.selectableDayPredicate != null &&
-                    !widget.selectableDayPredicate!(gregorianDate));
+          final currentDate = JewishDate()
+            ..setJewishDate(
+              monthDate.getJewishYear(),
+              monthDate.getJewishMonth(),
+              day,
+            );
+          final isSelected = currentDate.compareTo(_selectedDate) == 0;
+          final gregorianDate = currentDate.getGregorianCalendar();
+          final isDisabled =
+              currentDate.compareTo(JewishDate.fromDateTime(widget.firstDate)) <
+                      0 ||
+                  currentDate
+                          .compareTo(JewishDate.fromDateTime(widget.lastDate)) >
+                      0 ||
+                  (widget.selectableDayPredicate != null &&
+                      !widget.selectableDayPredicate!(gregorianDate));
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final size = constraints.maxWidth / 7;
-            return InkWell(
-              onTap: isDisabled ? null : () => _selectDate(currentDate),
-              child: Padding(
-                padding: EdgeInsets.all(1),
-                child: Container(
-                  margin: EdgeInsets.all(1),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? theme.selectedColor : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      widget.hebrewFormat
-                          ? _formatter.formatHebrewNumber(day)
-                          : day.toString(),
-                      style: theme.bodyTextStyle.copyWith(
-                        color: isSelected
-                            ? theme.onPrimaryColor
-                            : isDisabled
-                            ? theme.disabledColor
-                            : theme.onSurfaceColor,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        fontSize: size * 2.2,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return InkWell(
+                onTap: isDisabled ? null : () => _selectDate(currentDate),
+                child: Padding(
+                  padding: const EdgeInsets.all(1),
+                  child: Container(
+                    margin: const EdgeInsets.all(1),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected ? theme.selectedColor : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.hebrewFormat
+                            ? _formatter.formatHebrewNumber(day)
+                            : day.toString(),
+                        style: theme.bodyTextStyle.copyWith(
+                          color: isSelected
+                              ? theme.onPrimaryColor
+                              : isDisabled
+                              ? theme.disabledColor
+                              : theme.onSurfaceColor,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildActions(HebrewDatePickerTheme theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
-            child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _confirmDate,
-            style: ElevatedButton.styleFrom(
-              foregroundColor: theme.onPrimaryColor,
-              backgroundColor: theme.primaryColor,
-            ),
-            child: Text(widget.hebrewFormat ? 'אישור' : 'Confirm'),
-          ),
-        ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -480,6 +663,36 @@ class _MaterialHebrewDatePickerState
 
   void _confirmDate() {
     Navigator.of(context).pop(_selectedDate.getGregorianCalendar());
+  }
+
+  void _goToToday() {
+    final today = JewishDate();
+    final gregorianToday = today.getGregorianCalendar();
+
+    // Check if "today" is within the allowed date range and is selectable.
+    if (gregorianToday.isBefore(widget.firstDate) ||
+        gregorianToday.isAfter(widget.lastDate) ||
+        (widget.selectableDayPredicate != null &&
+            !widget.selectableDayPredicate!(gregorianToday))) {
+      // Optionally, show a message to the user that today is not available.
+      return;
+    }
+
+    setState(() {
+      _pickerMode = HebrewDatePickerMode.day;
+      _displayedMonth = today;
+      _selectedDate = today; // Select today's date
+      _currentPage = _monthsBetween(
+        JewishDate.fromDateTime(widget.firstDate),
+        today,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentPage);
+        }
+      });
+    });
+    widget.onDateChange(today.getGregorianCalendar());
   }
 
   String _formatFullDate(JewishDate date) {
@@ -523,6 +736,8 @@ class HebrewDateRangePicker extends HebrewDatePickerBase {
     super.hebrewFormat,
     super.theme,
     super.selectableDayPredicate,
+    super.initialPickerMode,
+    super.calendarDirection,
   }) : super(
           initialDate: initialStartDate ?? firstDate,
         );
@@ -548,40 +763,48 @@ class _HebrewDateRangePickerState
   @override
   Widget build(BuildContext context) {
     final theme = _getMergedTheme();
-    final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.width < 360;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final maxWidth = isSmallScreen ? screenSize.width * 0.95 : 360.0;
-        final maxHeight = isSmallScreen ? screenSize.height * 0.9 : 640.0;
-
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-            ),
-            child: Directionality(
-              textDirection: TextDirection.rtl,
-              child: Dialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildHeader(theme),
-                    Flexible(child: _buildCalendar(theme, _buildMonthView)),
-                    _buildFooter(theme),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(theme),
+          _buildBody(context, theme),
+        ],
+      ),
     );
+  }
+
+  void _goToToday() {
+    final today = JewishDate();
+    final gregorianToday = today.getGregorianCalendar();
+
+    // Check if "today" is within the allowed date range and is selectable.
+    if (gregorianToday.isBefore(widget.firstDate) ||
+        gregorianToday.isAfter(widget.lastDate) ||
+        (widget.selectableDayPredicate != null &&
+            !widget.selectableDayPredicate!(gregorianToday))) {
+      // Optionally, show a message to the user that today is not available.
+      return;
+    }
+
+    setState(() {
+      _pickerMode = HebrewDatePickerMode.day;
+      _displayedMonth = today;
+      // Reset the selection and start a new range from today.
+      _startDate = today;
+      _endDate = today;
+      _hasSelection = true;
+      _isSelectingEndDate = true;
+      _currentPage = _monthsBetween(
+        JewishDate.fromDateTime(widget.firstDate),
+        today,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentPage);
+        }
+      });
+    });
   }
 
   Widget _buildHeader(HebrewDatePickerTheme theme) {
@@ -623,8 +846,43 @@ class _HebrewDateRangePickerState
     );
   }
 
-  Widget _buildMonthView(BuildContext context, int pageIndex) {
-    final theme = _getMergedTheme();
+  @override
+  Widget _buildBody(BuildContext context, HebrewDatePickerTheme theme) {
+    switch (_pickerMode) {
+      case HebrewDatePickerMode.day:
+        return _buildCalendar(
+          theme,
+          (context, pageIndex) => _buildMonthView(context, pageIndex, theme),
+        );
+      case HebrewDatePickerMode.month:
+        return Column(
+          children: [
+            _buildMonthSelector(theme),
+            AspectRatio(
+              aspectRatio: 7 / 6,
+              child: _buildMonthPicker(theme),
+            ),
+          ],
+        );
+      case HebrewDatePickerMode.year:
+        return Column(
+          children: [
+            _buildMonthSelector(theme),
+            AspectRatio(
+              aspectRatio: 7 / 6,
+              child: _buildYearPicker(theme),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildMonthView(
+      BuildContext context, int pageIndex, HebrewDatePickerTheme theme) {
+    final textDirection = (widget.calendarDirection == HebrewCalendarDirection.rtl ||
+            (widget.calendarDirection == null && widget.hebrewFormat))
+        ? TextDirection.rtl
+        : TextDirection.ltr;
     final monthDate = _getMonthFromPageIndex(pageIndex);
     final daysInMonth = monthDate.getDaysInJewishMonth();
     final firstDayOfMonth = JewishDate()
@@ -632,96 +890,72 @@ class _HebrewDateRangePickerState
     final firstWeekday = firstDayOfMonth.getDayOfWeek();
     final today = JewishDate.fromDateTime(DateTime.now());
 
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        childAspectRatio: 1,
-      ),
-      itemCount: 42,
-      itemBuilder: (context, index) {
-        final int day = index - firstWeekday + 2;
-        if (day < 1 || day > daysInMonth) return Container();
+    return Directionality(
+      textDirection: textDirection,
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 7,
+          childAspectRatio: 1,
+        ),
+        itemCount: 42,
+        itemBuilder: (context, index) {
+          final int day = index - firstWeekday + 2;
+          if (day < 1 || day > daysInMonth) return Container();
 
-        final currentDate = JewishDate()
-          ..setJewishDate(
-            monthDate.getJewishYear(),
-            monthDate.getJewishMonth(),
-            day,
-          );
-        final isSelected = _isDateInRange(currentDate);
-        final isDisabled = _isDateDisabled(currentDate);
-        final isToday = currentDate.compareTo(today) == 0;
+          final currentDate = JewishDate()
+            ..setJewishDate(
+              monthDate.getJewishYear(),
+              monthDate.getJewishMonth(),
+              day,
+            );
+          final isSelected = _isDateInRange(currentDate);
+          final isDisabled = _isDateDisabled(currentDate);
+          final isToday = currentDate.compareTo(today) == 0;
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final size = constraints.maxWidth / 7;
-            return InkWell(
-              onTap: isDisabled ? null : () => _selectDate(currentDate),
-              child: Padding(
-                padding: EdgeInsets.all(size * 0.05),
-                child: Container(
-                  margin: EdgeInsets.all(size * 0.01),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.primaryColor
-                        : isToday
-                        ? theme.todayColor.withOpacity(0.3)
-                        : null,
-                    borderRadius: BorderRadius.circular(20),
-                    border: isToday
-                        ? Border.all(color: theme.todayColor, width: 2)
-                        : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      widget.hebrewFormat
-                          ? _formatter.formatHebrewNumber(day)
-                          : day.toString(),
-                      style: theme.bodyTextStyle.copyWith(
-                        color: isSelected
-                            ? theme.onPrimaryColor
-                            : isDisabled
-                            ? theme.onSurfaceColor.withOpacity(0.38)
-                            : isToday
-                            ? theme.todayColor
-                            : theme.onSurfaceColor,
-                        fontWeight: isToday
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        fontSize: size * 2.2,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return InkWell(
+                onTap: isDisabled ? null : () => _selectDate(currentDate),
+                child: Padding(
+                  padding: EdgeInsets.all(constraints.maxWidth * 0.05),
+                  child: Container(
+                    margin: EdgeInsets.all(constraints.maxWidth * 0.01),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? theme.primaryColor
+                          : isToday
+                          ? theme.todayColor.withOpacity(0.3)
+                          : null,
+                      borderRadius: BorderRadius.circular(20),
+                      border: isToday
+                          ? Border.all(color: theme.todayColor, width: 2)
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        widget.hebrewFormat
+                            ? _formatter.formatHebrewNumber(day)
+                            : day.toString(),
+                        style: theme.bodyTextStyle.copyWith(
+                          color: isSelected
+                              ? theme.onPrimaryColor
+                              : isDisabled
+                              ? theme.onSurfaceColor.withOpacity(0.38)
+                              : isToday
+                              ? theme.todayColor
+                              : theme.onSurfaceColor,
+                          fontWeight: isToday
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildFooter(HebrewDatePickerTheme theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
-            child: Text(widget.hebrewFormat ? 'ביטול' : 'Cancel'),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _hasSelection ? _confirmDateRange : null,
-            style: ElevatedButton.styleFrom(
-              foregroundColor: theme.onPrimaryColor,
-              backgroundColor: theme.primaryColor,
-            ),
-            child: Text(widget.hebrewFormat ? 'אישור' : 'Confirm'),
-          ),
-        ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -798,20 +1032,93 @@ Future<DateTime?> showMaterialHebrewDatePicker({
   bool hebrewFormat = true,
   HebrewDatePickerTheme? theme,
   bool Function(DateTime)? selectableDayPredicate,
+  HebrewDatePickerMode initialPickerMode = HebrewDatePickerMode.day,
+  HebrewCalendarDirection? calendarDirection,
 }) async {
+  final pickerKey = GlobalKey<_MaterialHebrewDatePickerState>();
   return showDialog<DateTime>(
     context: context,
     builder: (BuildContext context) {
-      return MaterialHebrewDatePicker(
-        initialDate: initialDate ?? DateTime.now(),
-        firstDate: firstDate,
-        lastDate: lastDate,
-        onDateChange: onDateChange ?? (_) {},
-        hebrewFormat: hebrewFormat,
-        theme: theme,
-        selectableDayPredicate: selectableDayPredicate,
+      final finalTheme = theme ?? const HebrewDatePickerTheme();
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: SizedBox(
+          width: 328,
+          height: 500,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: MaterialHebrewDatePicker(
+                    key: pickerKey,
+                    initialDate: initialDate ?? DateTime.now(),
+                    firstDate: firstDate,
+                    lastDate: lastDate,
+                    onDateChange: onDateChange ?? (_) {},
+                    hebrewFormat: hebrewFormat,
+                    theme: finalTheme,
+                    selectableDayPredicate: selectableDayPredicate,
+                    initialPickerMode: initialPickerMode,
+                    calendarDirection: calendarDirection,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: _buildDialogActions(
+                  context: context,
+                  pickerKey: pickerKey,
+                  theme: finalTheme,
+                  hebrewFormat: hebrewFormat,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     },
+  );
+}
+
+Widget _buildDialogActions({
+  required BuildContext context,
+  required GlobalKey<_MaterialHebrewDatePickerState> pickerKey,
+  required HebrewDatePickerTheme theme,
+  required bool hebrewFormat,
+}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      TextButton(
+        onPressed: () {
+          // Access the state via the key to call the method
+          pickerKey.currentState?._goToToday();
+        },
+        child: Text(hebrewFormat ? 'היום' : 'Today'),
+      ),
+      Row(
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(hebrewFormat ? 'ביטול' : 'Cancel'),
+            style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () {
+              pickerKey.currentState?._confirmDate();
+            },
+            child: Text(hebrewFormat ? 'אישור' : 'Confirm'),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: theme.onPrimaryColor,
+              backgroundColor: theme.primaryColor,
+            ),
+          ),
+        ],
+      ),
+    ],
   );
 }
 
@@ -829,19 +1136,87 @@ Future<DateTimeRange?> showMaterialHebrewDateRangePicker({
   bool hebrewFormat = true,
   HebrewDatePickerTheme? theme,
   bool Function(DateTime)? selectableDayPredicate,
+  HebrewDatePickerMode initialPickerMode = HebrewDatePickerMode.day,
+  HebrewCalendarDirection? calendarDirection,
 }) async {
+  final pickerKey = GlobalKey<_HebrewDateRangePickerState>();
   return showDialog<DateTimeRange>(
     context: context,
     builder: (BuildContext context) {
-      return HebrewDateRangePicker(
-        initialStartDate: initialStartDate,
-        initialEndDate: initialEndDate,
-        firstDate: firstDate,
-        lastDate: lastDate,
-        hebrewFormat: hebrewFormat,
-        theme: theme,
-        selectableDayPredicate: selectableDayPredicate,
+      final finalTheme = theme ?? const HebrewDatePickerTheme();
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: SizedBox(
+          width: 328,
+          height: 500,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: HebrewDateRangePicker(
+                    key: pickerKey,
+                    initialStartDate: initialStartDate,
+                    initialEndDate: initialEndDate,
+                    firstDate: firstDate,
+                    lastDate: lastDate,
+                    hebrewFormat: hebrewFormat,
+                    theme: finalTheme,
+                    selectableDayPredicate: selectableDayPredicate,
+                    initialPickerMode: initialPickerMode,
+                    calendarDirection: calendarDirection,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: _buildRangeDialogActions(
+                  context: context,
+                  pickerKey: pickerKey,
+                  theme: finalTheme,
+                  hebrewFormat: hebrewFormat,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     },
+  );
+}
+
+Widget _buildRangeDialogActions({
+  required BuildContext context,
+  required GlobalKey<_HebrewDateRangePickerState> pickerKey,
+  required HebrewDatePickerTheme theme,
+  required bool hebrewFormat,
+}) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      TextButton(
+        onPressed: () => pickerKey.currentState?._goToToday(),
+        child: Text(hebrewFormat ? 'היום' : 'Today'),
+      ),
+      Row(
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(hebrewFormat ? 'ביטול' : 'Cancel'),
+            style: TextButton.styleFrom(foregroundColor: theme.primaryColor),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => pickerKey.currentState?._confirmDateRange(),
+            child: Text(hebrewFormat ? 'אישור' : 'Confirm'),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: theme.onPrimaryColor,
+              backgroundColor: theme.primaryColor,
+            ),
+          ),
+        ],
+      ),
+    ],
   );
 }
